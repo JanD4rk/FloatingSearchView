@@ -72,19 +72,19 @@ public class MainActivity extends AppCompatActivity implements
         mSearchView = (FloatingSearchView) findViewById(R.id.search);
         mAdapter = new SearchAdapter();
         mSearchView.setAdapter(mAdapter);
-        mSearchView.showLogo(true);
         mSearchView.setItemAnimator(new CustomSuggestionItemAnimator(mSearchView));
 
         updateNavigationIcon("Search");
 
-        mSearchView.showIcon(shouldShowNavigationIcon());
 
         mSearchView.setOnIconClickListener(() -> {
             // toggle
             mSearchView.setActivated(!mSearchView.isActivated());
         });
 
-        mSearchView.setOnSearchListener(text -> mSearchView.setActivated(false));
+        mSearchView.setOnSearchListener(text ->{
+            mSearchView.setActivated(false);
+        });
 
         mSearchView.setOnMenuItemClickListener(this);
 
@@ -110,12 +110,7 @@ public class MainActivity extends AppCompatActivity implements
 
             showClearButton(focused && !textEmpty);
             if(!focused) showProgressBar(false);
-            mSearchView.showLogo(!focused && textEmpty);
 
-            if (focused)
-                mSearchView.showIcon(true);
-            else
-                mSearchView.showIcon(shouldShowNavigationIcon());
         });
 
         mSearchView.setText(null);
@@ -142,16 +137,16 @@ public class MainActivity extends AppCompatActivity implements
                 break;
         }
 
-        if (drawable != null) {
-            drawable = DrawableCompat.wrap(drawable);
-            DrawableCompat.setTint(drawable, ViewUtils.getThemeAttrColor(context, android.R.attr.colorControlNormal));
-            mSearchView.setIcon(drawable);
-        }
+//        if (drawable != null) {
+//            drawable = DrawableCompat.wrap(drawable);
+//            DrawableCompat.setTint(drawable, ViewUtils.getThemeAttrColor(context, android.R.attr.colorControlNormal));
+//            mSearchView.setIcon(drawable);
+//        }
     }
 
-    private boolean shouldShowNavigationIcon() {
-        return mSearchView.getMenu().findItem(R.id.menu_toggle_icon).isChecked();
-    }
+//    private boolean shouldShowNavigationIcon() {
+//        return mSearchView.getMenu().findItem(R.id.menu_toggle_icon).isChecked();
+//    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -182,7 +177,6 @@ public class MainActivity extends AppCompatActivity implements
                 break;
             case "Icon Visible":
                 item.setChecked(!item.isChecked());
-                mSearchView.showIcon(item.isChecked());
                 break;
             case "Text to speech":
                 PackageUtils.startTextToSpeech(this, getString(R.string.speech_prompt), REQ_CODE_SPEECH_INPUT);
@@ -282,7 +276,7 @@ public class MainActivity extends AppCompatActivity implements
             url = (TextView) itemView.findViewById(R.id.url);
             left.setImageResource(R.drawable.ic_google);
             itemView.findViewById(R.id.text_container)
-                    .setOnClickListener(v -> onItemClick(mAdapter.getItem(getBindingAdapterPosition())));
+                    .setOnClickListener(v -> onItemClick(mAdapter.getItem(getAdapterPosition())));
             right.setOnClickListener(v -> mSearchView.setText(text.getText()));
         }
 

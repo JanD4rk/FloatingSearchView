@@ -31,6 +31,7 @@ import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
@@ -107,8 +108,7 @@ public class FloatingSearchView extends RelativeLayout {
         void onFocusChanged(boolean focused);
     }
 
-    final private LogoEditText mSearchInput;
-    final private ImageView mNavButtonView;
+    final private EditText mSearchInput;
     final private RecyclerView mRecyclerView;
     final private ViewGroup mSearchContainer;
     final private View mDivider;
@@ -149,7 +149,6 @@ public class FloatingSearchView extends RelativeLayout {
         inflate(getContext(), R.layout.fsv_floating_search_layout, this);
 
         mSearchInput = findViewById(R.id.fsv_search_text);
-        mNavButtonView = findViewById(R.id.fsv_search_action_navigation);
         mRecyclerView = findViewById(R.id.fsv_suggestions_list);
         mDivider = findViewById(R.id.fsv_suggestions_divider);
         mSearchContainer = findViewById(R.id.fsv_search_container);
@@ -208,13 +207,10 @@ public class FloatingSearchView extends RelativeLayout {
         MarginLayoutParamsCompat.setMarginEnd(searchParams, contentInsetEnd);
 
         // anything else
-        setLogo(a.getDrawable(R.styleable.FloatingSearchView_logo));
         setContentBackgroundColor(a.getColor(R.styleable.FloatingSearchView_fsv_contentBackgroundColor, DEFAULT_CONTENT_COLOR));
         setRadius(a.getDimensionPixelSize(R.styleable.FloatingSearchView_fsv_cornerRadius, ViewUtils.dpToPx(DEFAULT_RADIUS)));
-        inflateMenu(a.getResourceId(R.styleable.FloatingSearchView_fsv_menu, 0));
-        setPopupTheme(a.getResourceId(R.styleable.FloatingSearchView_popupTheme, 0));
+        inflateMenu(R.menu.search);
         setHint(a.getString(R.styleable.FloatingSearchView_android_hint));
-        setIcon(a.getDrawable(R.styleable.FloatingSearchView_fsv_icon));
 
         a.recycle();
     }
@@ -245,10 +241,7 @@ public class FloatingSearchView extends RelativeLayout {
         setBackground(mBackgroundDrawable);
         mBackgroundDrawable.setAlpha(0);
 
-        mNavButtonView.setOnClickListener(v -> {
-            if(mNavigationClickListener != null)
-                mNavigationClickListener.onNavigationClick();
-        });
+
 
         setOnTouchListener((v, event) -> {
             if (!isActivated()) return false;
@@ -282,24 +275,12 @@ public class FloatingSearchView extends RelativeLayout {
         return mActionMenu.getMenu();
     }
 
-    public void setPopupTheme(@StyleRes int resId) {
-        mActionMenu.setPopupTheme(resId);
-    }
+
 
     public void inflateMenu(@MenuRes int menuRes) {
-        if(menuRes == 0) return;
         if (isInEditMode()) return;
         getActivity().getMenuInflater().inflate(menuRes, mActionMenu.getMenu());
-        @SuppressLint("ResourceType") @LayoutRes int layoutRes = menuRes;
-        try (XmlResourceParser parser = getResources().getLayout(layoutRes)) {
-            //noinspection ResourceType
-            AttributeSet attrs = Xml.asAttributeSet(parser);
-            parseMenu(parser, attrs);
-        }
-        catch (XmlPullParserException | IOException e) {
-            // should not happens
-            throw new InflateException("Error parsing menu XML", e);
-        }
+
     }
 
     public void setOnSearchListener(final OnSearchListener listener) {
@@ -344,7 +325,6 @@ public class FloatingSearchView extends RelativeLayout {
             mFocusListener.onFocusChanged(activated);
 
         showMenu(!activated);
-        fadeIn(activated);
         updateSuggestionsVisibility();
     }
 
@@ -379,36 +359,10 @@ public class FloatingSearchView extends RelativeLayout {
         mRecyclerView.addItemDecoration(decoration);
     }
 
-    public void setLogo(Drawable drawable) {
-        mSearchInput.setLogo(drawable);
-    }
 
-    public void setLogo(@DrawableRes int resId) {
-        mSearchInput.setLogo(resId);
-    }
 
-    public void setIcon(@DrawableRes int resId) {
-        showIcon(resId != 0);
-        mNavButtonView.setImageResource(resId);
-    }
 
-    public void setIcon(Drawable drawable) {
-        showIcon(drawable != null);
-        mNavButtonView.setImageDrawable(drawable);
-    }
 
-    public void showLogo(boolean show) {
-        mSearchInput.showLogo(show);
-    }
-
-    public void showIcon(boolean show) {
-        mNavButtonView.setVisibility(show ? View.VISIBLE : View.GONE);
-    }
-
-    public Drawable getIcon() {
-        if(mNavButtonView == null) return null;
-        return mNavButtonView.getDrawable();
-    }
 
     @Nullable
     public RecyclerView.Adapter<? extends RecyclerView.ViewHolder> getAdapter() {
@@ -419,24 +373,6 @@ public class FloatingSearchView extends RelativeLayout {
         return new LayoutTransition();
     }
 
-    @SuppressLint("ObjectAnimatorBinding")
-    private void fadeIn(boolean enter) {
-        ValueAnimator backgroundAnim;
-
-        backgroundAnim = ObjectAnimator.ofInt(mBackgroundDrawable, "alpha", enter ? 255 : 0);
-        backgroundAnim.setDuration(enter ? DEFAULT_DURATION_ENTER : DEFAULT_DURATION_EXIT);
-        backgroundAnim.setInterpolator(enter ? DECELERATE : ACCELERATE);
-        backgroundAnim.start();
-
-        Drawable icon = unwrap(getIcon());
-
-        if(icon != null) {
-            ObjectAnimator iconAnim = ObjectAnimator.ofFloat(icon, "progress", enter ? 1 : 0);
-            iconAnim.setDuration(backgroundAnim.getDuration());
-            iconAnim.setInterpolator(backgroundAnim.getInterpolator());
-            iconAnim.start();
-        }
-    }
 
     private int getSuggestionsCount() {
         RecyclerView.Adapter<? extends RecyclerView.ViewHolder> adapter = getAdapter();
@@ -525,79 +461,7 @@ public class FloatingSearchView extends RelativeLayout {
         }
     }
 
-    @SuppressLint({"CustomViewStyleable", "PrivateResource"})
-    private void parseMenu(XmlPullParser parser, AttributeSet attrs)
-            throws XmlPullParserException, IOException {
 
-        int eventType = parser.getEventType();
-        String tagName;
-        boolean lookingForEndOfUnknownTag = false;
-        String unknownTagName = null;
-
-        // This loop will skip to the menu start tag
-        do {
-            if (eventType == XmlPullParser.START_TAG) {
-                tagName = parser.getName();
-                if (tagName.equals("menu")) {
-                    // Go to next tag
-                    eventType = parser.next();
-                    break;
-                }
-
-                throw new RuntimeException("Expecting menu, got " + tagName);
-            }
-            eventType = parser.next();
-        } while (eventType != XmlPullParser.END_DOCUMENT);
-
-        boolean reachedEndOfMenu = false;
-
-        while (!reachedEndOfMenu) {
-            switch (eventType) {
-                case XmlPullParser.START_TAG:
-                    if (lookingForEndOfUnknownTag) {
-                        break;
-                    }
-
-                    tagName = parser.getName();
-                    if (tagName.equals("item")) {
-                        TypedArray a = getContext().obtainStyledAttributes(attrs, androidx.appcompat.R.styleable.MenuItem);
-                        int itemShowAsAction = a.getInt(androidx.appcompat.R.styleable.MenuItem_showAsAction, -1);
-
-                        if((itemShowAsAction & MenuItem.SHOW_AS_ACTION_ALWAYS) != 0) {
-                            int itemId = a.getResourceId(androidx.appcompat.R.styleable.MenuItem_android_id, NO_ID);
-                            if(itemId != NO_ID) mAlwaysShowingMenu.add(itemId);
-                        }
-                        a.recycle();
-                    } else {
-                        lookingForEndOfUnknownTag = true;
-                        unknownTagName = tagName;
-                    }
-                    break;
-
-                case XmlPullParser.END_TAG:
-                    tagName = parser.getName();
-                    if (lookingForEndOfUnknownTag && tagName.equals(unknownTagName)) {
-                        lookingForEndOfUnknownTag = false;
-                        unknownTagName = null;
-                    } else if (tagName.equals("menu")) {
-                        reachedEndOfMenu = true;
-                    }
-                    break;
-
-                case XmlPullParser.END_DOCUMENT:
-                    throw new RuntimeException("Unexpected end of document");
-            }
-
-            eventType = parser.next();
-        }
-    }
-
-    @SuppressLint("RestrictedApi")
-    static private Drawable unwrap(Drawable icon) {
-        if(Build.VERSION.SDK_INT >= 23 && icon instanceof android.graphics.drawable.DrawableWrapper)
-            return ((android.graphics.drawable.DrawableWrapper)icon).getDrawable();
-        return DrawableCompat.unwrap(icon);
-    }
 
     private static class RecyclerView extends androidx.recyclerview.widget.RecyclerView {
 
