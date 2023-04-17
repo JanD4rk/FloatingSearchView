@@ -29,7 +29,6 @@
         android:background="#90000000"
         android:hint="@string/hint"
         app:logo="@drawable/logo"
-        app:fsv_menu="@menu/search"
         tools:context="com.mypopsy.floatingsearchview.demo.MainActivity"
         app:theme="@style/CustomFloatingSearchViewTheme"/>
 

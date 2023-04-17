@@ -51,7 +51,6 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class MainActivity extends AppCompatActivity implements
-        ActionMenuView.OnMenuItemClickListener,
         SearchController.Listener {
 
     private static final int REQ_CODE_SPEECH_INPUT = 42;
@@ -69,24 +68,17 @@ public class MainActivity extends AppCompatActivity implements
 
         mSearch.setListener(this);
 
-        mSearchView = (FloatingSearchView) findViewById(R.id.search);
+        mSearchView = findViewById(R.id.search);
         mAdapter = new SearchAdapter();
         mSearchView.setAdapter(mAdapter);
-        mSearchView.showLogo(true);
         mSearchView.setItemAnimator(new CustomSuggestionItemAnimator(mSearchView));
 
-        updateNavigationIcon("Search");
 
-        mSearchView.showIcon(shouldShowNavigationIcon());
 
-        mSearchView.setOnIconClickListener(() -> {
-            // toggle
-            mSearchView.setActivated(!mSearchView.isActivated());
-        });
+
 
         mSearchView.setOnSearchListener(text -> mSearchView.setActivated(false));
 
-        mSearchView.setOnMenuItemClickListener(this);
 
         mSearchView.addTextChangedListener(new TextWatcher() {
             @Override
@@ -95,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements
 
             @Override
             public void onTextChanged(CharSequence query, int start, int before, int count) {
-                showClearButton(query.length() > 0 && mSearchView.isActivated());
+//                showClearButton(query.length() > 0 && mSearchView.isActivated());
                 search(query.toString().trim());
             }
 
@@ -108,50 +100,23 @@ public class MainActivity extends AppCompatActivity implements
         mSearchView.setOnSearchFocusChangedListener(focused -> {
             boolean textEmpty = mSearchView.getText().length() == 0;
 
-            showClearButton(focused && !textEmpty);
-            if(!focused) showProgressBar(false);
-            mSearchView.showLogo(!focused && textEmpty);
-
-            if (focused)
-                mSearchView.showIcon(true);
-            else
-                mSearchView.showIcon(shouldShowNavigationIcon());
+//            showClearButton(focused && !textEmpty);
+//            if(!focused) showProgressBar(false);
+//            mSearchView.showLogo(!focused && textEmpty);
+//
         });
 
         mSearchView.setText(null);
     }
 
     private void search(String query) {
-        showProgressBar(mSearchView.isActivated());
+//        showProgressBar(mSearchView.isActivated());
         mSearch.search(query);
     }
 
-    private void updateNavigationIcon(String title) {
-        Context context = mSearchView.getContext();
-        Drawable drawable = null;
 
-        switch(title) {
-            case "Search":
-                drawable = new SearchArrowDrawable(context);
-                break;
-            case "Drawer":
-                drawable = new DrawerArrowDrawable(context);
-                break;
-            case "Custom":
-                drawable = new CustomDrawable(context);
-                break;
-        }
 
-        if (drawable != null) {
-            drawable = DrawableCompat.wrap(drawable);
-            DrawableCompat.setTint(drawable, ViewUtils.getThemeAttrColor(context, android.R.attr.colorControlNormal));
-            mSearchView.setIcon(drawable);
-        }
-    }
 
-    private boolean shouldShowNavigationIcon() {
-        return mSearchView.getMenu().findItem(R.id.menu_toggle_icon).isChecked();
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -172,30 +137,7 @@ public class MainActivity extends AppCompatActivity implements
         mSearch.cancel();
     }
 
-    @Override
-    public boolean onMenuItemClick(MenuItem item) {
 
-        switch ((String) item.getTitle()) {
-            case "Clear":
-                mSearchView.setText(null);
-                mSearchView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
-                break;
-            case "Icon Visible":
-                item.setChecked(!item.isChecked());
-                mSearchView.showIcon(item.isChecked());
-                break;
-            case "Text to speech":
-                PackageUtils.startTextToSpeech(this, getString(R.string.speech_prompt), REQ_CODE_SPEECH_INPUT);
-                break;
-            case"Search":
-            case "Drawer":
-            case "Custom":
-                updateNavigationIcon((String) item.getTitle());
-                Toast.makeText(MainActivity.this, item.getTitle(), Toast.LENGTH_SHORT).show();
-                break;
-        }
-        return true;
-    }
 
     @Override
     public void onSearchStarted(String query) {
@@ -210,7 +152,7 @@ public class MainActivity extends AppCompatActivity implements
         if (searchResults != null) mAdapter.addAll(searchResults);
         mAdapter.setNotifyOnChange(true);
         mAdapter.notifyDataSetChanged();
-        showProgressBar(false);
+//        showProgressBar(false);
     }
 
     @Override
@@ -224,13 +166,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
 
-    private void showProgressBar(boolean show) {
-        mSearchView.getMenu().findItem(R.id.menu_progress).setVisible(show);
-    }
 
-    private void showClearButton(boolean show) {
-        mSearchView.getMenu().findItem(R.id.menu_clear).setVisible(show);
-    }
 
     public void onGithubClick(View view) {
         PackageUtils.start(this, Uri.parse("https://github.com/renaudcerrato/FloatingSearchView"));
@@ -276,7 +212,7 @@ public class MainActivity extends AppCompatActivity implements
 
         public SuggestionViewHolder(final View itemView) {
             super(itemView);
-            left = (ImageView) itemView.findViewById(R.id.icon_start);
+            left = itemView.findViewById(R.id.icon_start);
             right= (ImageView) itemView.findViewById(R.id.icon_end);
             text = (TextView) itemView.findViewById(R.id.text);
             url = (TextView) itemView.findViewById(R.id.url);

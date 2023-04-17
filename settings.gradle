@@ -15,4 +15,3 @@ dependencyResolutionManagement {
 }
 rootProject.name = "FloatingSearchView"
 include ':sample', ':library'
-include ':library-ktx'

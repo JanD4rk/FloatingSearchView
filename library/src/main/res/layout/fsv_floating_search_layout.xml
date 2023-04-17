@@ -20,7 +20,7 @@
         android:layout_below="@+id/fsv_search_container"
         android:layout_alignStart="@+id/fsv_search_container">
 
-        <view class="com.mypopsy.widget.FloatingSearchView$RecyclerView"
+        <com.mypopsy.widget.adapter.CustomRecyclerView
               android:id="@+id/fsv_suggestions_list"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
